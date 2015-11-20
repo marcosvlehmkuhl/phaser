@@ -16,7 +16,8 @@
     "gulp": "~3.9.0",
     "gulp-browserify": "^0.5.1",
     "gulp-util": "^3.0.7",
-    "nodemon": "~1.7.1"
+    "nodemon": "~1.7.1",
+    "requiredir": "^1.0.7"
   },
   "devDependencies": {
     "browser-sync": "^2.9.8",
