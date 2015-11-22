@@ -4,7 +4,7 @@ var facing = 'right';
 function preload() {
   game.load.image('floor', './assets/images/floor.png', 68,150);
   game.load.image('background', './assets/images/background.png');
-  game.load.spritesheet('hero', './assets/images/hero2.png', 150, 160, 15);
+  game.load.spritesheet('hero', './assets/images/hero2.png', 150, 160, 32);
 }
 
 
@@ -19,6 +19,7 @@ function create() {
   hero.body.collideWorldBounds = true;
   hero.animations.add('walk',[0,1,2,3,4,5,6,7]);
   hero.animations.add('idle',[8,9,10,11,12,13,14]);
+  hero.animations.add('jump',[16,17,18,19,20,21,22,23,24,25,26,27,28,29]);
   
   ground = game.add.sprite(0,0,'floor');
   game.physics.enable(ground, Phaser.Physics.ARCADE);
@@ -35,21 +36,28 @@ function update() {
    if (game.input.keyboard.isDown(Phaser.Keyboard.LEFT))
     {
       hero.x -= 2;
-      hero.animations.play('walk', 10, true);
+      hero.animations.play('walk', 10);
       game.camera.y -= 4
       facing = 'left';
     }
     else if (game.input.keyboard.isDown(Phaser.Keyboard.RIGHT))
     {
-        hero.x += 2;
-        hero.animations.play('walk', 10, true);
-        game.camera.y -= 4
-        facing = 'right';
+      hero.x += 2;
+      game.camera.y -= 4
+      facing = 'right';
+      if(hero.body.onFloor() == false) {
+
+      }
+      else {
+        hero.animations.play('walk', 10);
+      }
     }
      else if (game.input.keyboard.isDown(Phaser.Keyboard.UP) && hero.body.onFloor())
     {
-      hero.animations.stop();
+      hero.animations.play('jump', 12, true);
       hero.body.velocity.y = -250;
+    }
+    else if(hero.body.onFloor() == false) {
     }
     else {
        if(facing == 'left') {
