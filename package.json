@@ -13,7 +13,7 @@
   "author": "Marcos Lehmkuhl",
   "license": "BSD-2-Clause",
   "dependencies": {
-    "gulp": "~3.9.0",
+    "gulp": "^3.9.0",
     "gulp-browserify": "^0.5.1",
     "gulp-util": "^3.0.7",
     "nodemon": "~1.7.1",
