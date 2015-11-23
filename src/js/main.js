@@ -20,6 +20,7 @@ function create() {
   hero.animations.add('walk',[0,1,2,3,4,5,6,7]);
   hero.animations.add('idle',[8,9,10,11,12,13,14]);
   hero.animations.add('jump',[16,17,18,19,20,21,22,23,24,25,26,27,28,29]);
+  hero.animations.add('punch',[30,31]);
   
   ground = game.add.sprite(0,0,'floor');
   game.physics.enable(ground, Phaser.Physics.ARCADE);
@@ -57,7 +58,10 @@ function update() {
       hero.animations.play('jump', 12, true);
       hero.body.velocity.y = -250;
     }
-    else if(hero.body.onFloor() == false) {
+    else if(game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) {
+      hero.animations.play('punch',12,false);
+    }
+     else if(hero.body.onFloor() == false) {
     }
     else {
        if(facing == 'left') {
