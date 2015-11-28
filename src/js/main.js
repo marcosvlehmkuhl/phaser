@@ -63,10 +63,10 @@ var Hero = function(game, x, y) {
       animationRateFrame: 10,
       actions: [
         function(target) {
-          if(target.facing != 'right') {
-            target.facing = 'right';
-            target.scale.x *= -1;
-          }
+          // if(target.facing != 'right') {
+          //   target.facing = 'right';
+          //   target.scale.x *= -1;
+          // }
           target.body.x += 4;
         }
       ]
@@ -76,10 +76,6 @@ var Hero = function(game, x, y) {
       animationRateFrame: 10,
       actions: [
         function(target) {
-           if(target.facing != 'left') {
-            target.facing = 'left';
-            target.scale.x *= -1;
-          }
           target.body.x -= 4;
         }
       ]
@@ -89,6 +85,12 @@ var Hero = function(game, x, y) {
       animationRateFrame: 10,
       actions: [
         function(target) {
+          target.stopped = false;
+          target.jumping = true;
+          setTimeout(function(){
+            target.stopped = true;
+            target.jumping = false;
+          },1000);
           target.body.velocity.y = -250;
         }
       ]
@@ -141,6 +143,8 @@ var Hero = function(game, x, y) {
   this.sprite.animations.add('punch',[30,31]);
   this.sprite.animations.add('kick',[32,33]);
   this.sprite.facing = 'right';
+  this.sprite.stopped = true;
+  this.sprite.jumping = false;
   this.actions = function(param, boolean) {
     this.sprite.animations.play(param.animation, param.animationRateFrame, boolean);
     (function(target){
@@ -209,7 +213,7 @@ function update() {
   enemies.forEach(function(enemy) {
     game.physics.arcade.collide(hero, enemy);
     enemy.sprite.body.velocity.x = 0;
-    // enemy.sprite.animations.play('idle',12);
+    enemy.sprite.animations.play('idle',12);
     if(enemy.isAlive == false) {
       enemy.sprite.animations.play('dead', 12, true);
       setTimeout(function(){
@@ -225,17 +229,33 @@ function update() {
 
   if (game.input.keyboard.isDown(Phaser.Keyboard.RIGHT))
   {
-    hero.actions(hero.params.walkRight);
+    if(hero.sprite.facing != 'right') {
+      hero.sprite.facing = 'right';
+      hero.sprite.scale.x *= -1;
+    }
+    if(hero.sprite.body.onFloor()) {
+      hero.actions(hero.params.walkRight);
+    }
+    else {
+      hero.sprite.body.x += 4;
+    }      
   }
   else if (game.input.keyboard.isDown(Phaser.Keyboard.LEFT))
   {
-    hero.actions(hero.params.walkLeft);
+    if(hero.sprite.facing != 'left') {
+      hero.sprite.facing = 'left';
+      hero.sprite.scale.x *= -1;
+    }
+    if(hero.sprite.body.onFloor()) {
+      hero.actions(hero.params.walkLeft);
+    }
+    else {
+      hero.sprite.body.x -= 4;
+    }   
   }
   else if (game.input.keyboard.isDown(Phaser.Keyboard.UP) && hero.sprite.body.onFloor())
   {
-    hero.actions(hero.params.jump, false);
-  }
-   else if(hero.sprite.body.onFloor() == false) {
+    hero.actions(hero.params.jump, false);      
   }
   else if (game.input.keyboard.isDown(Phaser.Keyboard.Z))
   {
@@ -245,7 +265,7 @@ function update() {
   {
     hero.actions(hero.params.kick);
   }
-  else {
+  else if(hero.sprite.stopped) {
     hero.actions(hero.params.idle);
   }
 }
