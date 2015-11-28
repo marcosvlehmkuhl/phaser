@@ -1,6 +1,41 @@
 var game = new Phaser.Game(1024, 768, Phaser.CANVAS, '', { preload: preload, create: create, update: update, render:render });
 var facing = 'right';
 
+var events = {
+  events: {},
+  on: function(eventName, fn) {
+    this.events[eventName] = this.events[eventName] || [];
+    this.events[eventName].push(fn);
+  },
+  emit: function(eventName, data) {
+    if(this.events[eventName]) {
+      this.events[eventName].forEach(function(fn){
+        fn(data);
+      });
+    }
+  }
+}
+
+events.on('punch', function(data){
+  data.health --;
+  if(data.health == 0) {
+    data.alive = false;
+    data.sprite.animations.play('walk', 12);
+    data.sprite.kill();
+    data = null;
+  }
+});
+
+events.on('kick', function(data){
+  data.health --;
+  if(data.health == 0) {
+    data.alive = false;
+    data.sprite.animations.play('walk', 12);
+    data.sprite.kill();
+    data = null;
+  }
+});
+
 function preload() {
   game.load.image('floor', './assets/images/floor.png', 68,150);
   game.load.image('background', './assets/images/background.png');
@@ -41,12 +76,28 @@ var Hero = function(game, x, y) {
     punch: {
       animation: 'punch',
       animationRateFrame: 10,
-      actions: []
+      actions: [
+        function() {
+          enemies.forEach(function(enemy){
+            if (game.physics.arcade.distanceBetween(hero.sprite, enemy.sprite) < 100) {
+              events.emit('punch', enemy); 
+            }            
+          })
+        }
+      ]
     },
     kick: {
       animation: 'kick',
       animationRateFrame: 10,
-      actions: []
+      actions: [
+        function() {
+          enemies.forEach(function(enemy){
+            if (game.physics.arcade.distanceBetween(hero.sprite, enemy.sprite) < 100) {
+              events.emit('punch', enemy); 
+            }            
+          })
+        }
+      ]
     },
      idle: {
       animation: 'idle',
@@ -78,6 +129,26 @@ var Hero = function(game, x, y) {
   }
 }
 
+var Enemy = function(game, x, y) {  
+  this.game = game;
+  this.health = 20;
+  this.alive = true;
+  this.sprite = game.add.sprite(x,y,'enemy1');
+  game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
+  this.sprite.body.bounce.y = 0;
+  this.sprite.body.gravity.y = 500;
+  this.sprite.body.collideWorldBounds = true;
+  this.sprite.animations.add('walk', [7,6,5,4,3,2,1,0]);
+  this.actions = function(param, boolean) {
+    this.sprite.animations.play(param.animation, param.animationRateFrame, boolean);
+    (function(target){
+      param.actions.forEach(function(action){
+        action(target);
+      });
+    })(this.sprite);
+  }
+}
+
 
 function create() {
 
@@ -91,14 +162,12 @@ function create() {
   ground.body.setSize(ground.body.width,68);
 
   hero = new Hero(game, 0, 400);
-  // enemy1 = new Enemy(game,200,530);
-  // enemy = game.add.sprite(200, 530, 'enemy1');
-  // game.physics.enable(enemy, Phaser.Physics.ARCADE);
-  // enemy.body.bounce.y = 0;
-  // enemy.body.gravity.y = 500;
-  // enemy.body.collideWorldBounds = true;
-  // enemy.animations.add('walk', [7,6,5,4,3,2,1,0]);
-  
+  enemies = [];
+
+  enemy = new Enemy(game, 300, 800);
+  enemy2 = new Enemy(game, 600, 800);
+  enemies.push(enemy);
+  enemies.push(enemy2);    
 
   game.camera.bounds.width = ground.body.width;
   game.world.setBounds(0, 0, ground.body.width, 768); //695
@@ -106,17 +175,17 @@ function create() {
 
 }
 
-// function heroCollider(player,enemy) {
-//   console.log(enemy.body.touching);
-// }
+function heroCollider(player,enemy) {
+  console.log(enemy.sprite.body.touching);
+}
 
 function update() {
   game.physics.arcade.collide(hero, ground);
-  // game.physics.arcade.collide(hero, enemy);
-  // game.physics.arcade.overlap(hero, enemy, heroCollider);
+  game.physics.arcade.collide(hero, enemy);
+  game.physics.arcade.overlap(hero, enemy, heroCollider);
   hero.sprite.body.velocity.x = 0;
-  // enemy.body.velocity.x = 0;
-  // enemy.frame = 7;
+  enemy.sprite.body.velocity.x = 0;
+
   if (game.input.keyboard.isDown(Phaser.Keyboard.RIGHT))
   {
     hero.actions(hero.params.walkRight);
