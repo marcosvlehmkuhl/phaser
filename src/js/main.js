@@ -1,6 +1,13 @@
 var game = new Phaser.Game(1024, 768, Phaser.CANVAS, '', { preload: preload, create: create, update: update, render:render });
 var facing = 'right';
 
+
+//TODO enemy idle and taking damage == easy
+// enemy disapearing after dead animation is done == medium to hard
+// if data.sprite.kill receveis a callback this can be easy
+// make enemy see you if you got in his range and make him walk forward
+// make him atack you
+
 var events = {
   events: {},
   on: function(eventName, fn) {
@@ -18,21 +25,26 @@ var events = {
 
 events.on('punch', function(data){
   data.health --;
-  if(data.health == 0) {
+  data.sprite.animations.play('damage', 12);
+  if(data.health <= 0) {
     data.alive = false;
-    data.sprite.animations.play('walk', 12);
-    data.sprite.kill();
-    data = null;
+    setTimeout(function(){
+      data.sprite.kill();
+    },2000);
+    // data = null;
   }
 });
 
 events.on('kick', function(data){
   data.health --;
-  if(data.health == 0) {
+  data.sprite.animations.play('damage', 12);
+  data.sprite.animations.play('walk', 2);
+  if(data.health <= 0) {
     data.alive = false;
-    data.sprite.animations.play('walk', 12);
-    data.sprite.kill();
-    data = null;
+    setTimeout(function(){
+      data.sprite.kill();
+    },2000);
+    // data = null;
   }
 });
 
@@ -40,7 +52,7 @@ function preload() {
   game.load.image('floor', './assets/images/floor.png', 68,150);
   game.load.image('background', './assets/images/background.png');
   game.load.spritesheet('hero', './assets/images/hero2.png', 150, 160, 34);
-  game.load.spritesheet('enemy1', './assets/images/enemy_2.png', 150, 160, 8);
+  game.load.spritesheet('enemy1', './assets/images/enemy_2.png', 150, 160, 9);
 }
 
 var Hero = function(game, x, y) {
@@ -139,6 +151,7 @@ var Enemy = function(game, x, y) {
   this.sprite.body.gravity.y = 500;
   this.sprite.body.collideWorldBounds = true;
   this.sprite.animations.add('walk', [7,6,5,4,3,2,1,0]);
+  this.sprite.animations.add('damage',[8,0]);
   this.actions = function(param, boolean) {
     this.sprite.animations.play(param.animation, param.animationRateFrame, boolean);
     (function(target){
@@ -161,7 +174,6 @@ function create() {
   ground.body.immovable = true;
   ground.body.setSize(ground.body.width,68);
 
-  hero = new Hero(game, 0, 400);
   enemies = [];
 
   enemy = new Enemy(game, 300, 800);
@@ -169,22 +181,22 @@ function create() {
   enemies.push(enemy);
   enemies.push(enemy2);    
 
+  hero = new Hero(game, 0, 400);
   game.camera.bounds.width = ground.body.width;
   game.world.setBounds(0, 0, ground.body.width, 768); //695
   game.camera.follow(hero.sprite);
 
 }
 
-function heroCollider(player,enemy) {
-  console.log(enemy.sprite.body.touching);
-}
 
 function update() {
   game.physics.arcade.collide(hero, ground);
-  game.physics.arcade.collide(hero, enemy);
-  game.physics.arcade.overlap(hero, enemy, heroCollider);
+  enemies.forEach(function(enemy) {
+    game.physics.arcade.collide(hero, enemy);
+    // game.physics.arcade.overlap(hero, enemy, heroCollider);
+    enemy.sprite.body.velocity.x = 0;    
+  });
   hero.sprite.body.velocity.x = 0;
-  enemy.sprite.body.velocity.x = 0;
 
   if (game.input.keyboard.isDown(Phaser.Keyboard.RIGHT))
   {
