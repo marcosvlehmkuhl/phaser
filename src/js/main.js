@@ -43,18 +43,16 @@ events.on('kick', function(data){
 });
 
 events.on('isdead', function(enemy){
-  enemy.sprite.animations.stop();
-  enemy.sprite.animations.play('dead',12);
-  setTimeout(function(){
-    enemy.sprite.kill();
-  },3000)
-})
+  enemy.isAlive = false;
+  return;
+});
 
 function preload() {
   game.load.image('floor', './assets/images/floor.png', 68,150);
   game.load.image('background', './assets/images/background.png');
   game.load.spritesheet('hero', './assets/images/hero2.png', 150, 160, 34);
   game.load.spritesheet('enemy1', './assets/images/enemy_2.png', 150, 160, 22);
+  game.load.spritesheet('gate', './assets/images/gate.png', 150, 160);
 }
 
 var Hero = function(game, x, y) {
@@ -193,7 +191,8 @@ function create() {
 
   hero = new Hero(game, 0, 400);
 
-  ground = game.add.sprite(0,0,'floor');
+  game.add.sprite(1150, 350,'gate');
+  ground = game.add.sprite(0, 0,'floor');
   game.physics.enable(ground, Phaser.Physics.ARCADE);
   ground.body.immovable = true;
   ground.body.setSize(ground.body.width,68);
@@ -209,13 +208,18 @@ function update() {
   game.physics.arcade.collide(hero, ground);
   enemies.forEach(function(enemy) {
     game.physics.arcade.collide(hero, enemy);
-    // game.physics.arcade.overlap(hero, enemy, heroCollider);
     enemy.sprite.body.velocity.x = 0;
-    if(!enemy.isAlive) {
-      enemy.sprite.animations.stop();
-      console.log('morreu');
+    // enemy.sprite.animations.play('idle',12);
+    if(enemy.isAlive == false) {
+      enemy.sprite.animations.play('dead', 12, true);
+      setTimeout(function(){
+        enemy.sprite.animations.stop();
+        enemy.sprite.kill();
+      },600)
     }
-    enemy.sprite.animations.play('idle',12);    
+    else {
+      enemy.sprite.animations.play('idle',12);
+    }    
   });
   hero.sprite.body.velocity.x = 0;
 
