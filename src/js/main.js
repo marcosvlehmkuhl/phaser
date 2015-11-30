@@ -390,6 +390,4 @@ function update() {
 }
    
 
-function render() {
-  game.debug.cameraInfo(game.camera,32,32);
-}
+function render() {}
