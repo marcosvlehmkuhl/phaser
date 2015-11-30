@@ -1,5 +1,6 @@
 var game = new Phaser.Game(1024, 768, Phaser.CANVAS, '', { preload: preload, create: create, update: update, render:render });
 var facing = 'right';
+Phaser.ScaleManager.pageAlignHorizontally = true;
 
 
 //TODO enemy idle and taking damage == easy
@@ -27,6 +28,7 @@ events.on('punch', function(data){
   data.health --;
   data.sprite.animations.play('damage', 12);
   if(data.health <= 0) {
+    console.log(data.name + ' is dead');
     events.emit('isdead', data);
   }
 });
@@ -51,9 +53,9 @@ function preload() {
   game.load.image('sky', './assets/images/sky.png');
   game.load.image('gate', './assets/images/gate.png');
   game.load.image('post', './assets/images/post.png');
-  game.load.spritesheet('hero', './assets/images/hero2.png', 150, 160, 34);
+  game.load.spritesheet('hero', './assets/images/hero2.png', 150, 160, 35);
   game.load.spritesheet('enemy1', './assets/images/enemy_1.png', 150, 160, 22);
-  game.load.spritesheet('police', './assets/images/police.png', 160, 160, 33);
+  game.load.spritesheet('police', './assets/images/police.png', 160, 160, 36);
   game.load.spritesheet('boss', './assets/images/boss.png', 400, 280, 23);
 }
 
@@ -127,7 +129,8 @@ var Hero = function(game, x, y) {
   };
 
   this.game = game;
-  this.health = 3;
+  this.name = 'hero';
+  this.health = 100;
   this.alive = true;
   this.sprite = game.add.sprite(x,y,'hero');
   game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
@@ -140,6 +143,7 @@ var Hero = function(game, x, y) {
   this.sprite.animations.add('jump',[16,17,18,19,20,21,22,23,24,25,26,27,28,29]);
   this.sprite.animations.add('punch',[30,31]);
   this.sprite.animations.add('kick',[32,33]);
+  this.sprite.animations.add('damage',[34,9]);
   this.sprite.facing = 'right';
   this.sprite.stopped = true;
   this.sprite.jumping = false;
@@ -188,10 +192,10 @@ var Police = function(game, x, y) {
   this.sprite.body.collideWorldBounds = true;
   this.sprite.animations.add('walk', [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]);
   this.sprite.animations.add('damage',[16,0]);
-  this.sprite.animations.add('dead',[17,18,19,20]);
+  this.sprite.animations.add('dead',[16,17,33,18,34,35,19,20,19,20,19,20]);
   this.sprite.animations.add('punch',[21,22,23,24]);
   this.sprite.animations.add('idle',[25,26,27,28,29,30,31,32]);
-  this.deadAnimationTime = 400;
+  this.deadAnimationTime = 1000;
   this.actions = function(param, boolean) {
     this.sprite.animations.play(param.animation, param.animationRateFrame, boolean);
     (function(target){
@@ -211,9 +215,9 @@ var Boss = function(game, x, y) {
   this.sprite.body.bounce.y = 0;
   this.sprite.body.gravity.y = 500;
   this.sprite.body.collideWorldBounds = true;
-  // this.sprite.animations.add('dead',[0,1,2,3,4,5,6,7,8,9,10,11]);
-  // this.sprite.animations.add('walk', [18,19,20,21]);
-  // this.sprite.animations.add('damage',[22]);
+  this.sprite.animations.add('dead',[0,1,2,3,4,5,6,7,8,9,10,11]);
+  this.sprite.animations.add('walk', [18,19,20,21]);
+  this.sprite.animations.add('damage',[22]);
   this.sprite.animations.add('idle',[12,13,14,15,16]);
   this.deadAnimationTime = 400;
   this.actions = function(param, boolean) {
@@ -238,11 +242,11 @@ function create() {
 
   enemies = [];
 
-  // enemy2 = new Enemy2(game, 600, 800);
-  enemy3 = new Boss(game, 300, 700);
+  enemy2 = new Police(game, 200, 800);
+  // enemy3 = new Boss(game, 300, 700);
 
-  // enemies.push(enemy2);  
-  enemies.push(enemy3);
+  enemies.push(enemy2);  
+  // enemies.push(enemy3);
 
 
   hero = new Hero(game, 0, 400);
@@ -275,14 +279,16 @@ function update() {
       enemy.sprite.animations.play('dead', 12, true);
       setTimeout(function(){
         enemy.sprite.kill();
+        enemies.slice(enemies.indexOf(enemy),1);
+        enemy = null;
       },enemy.deadAnimationTime);
     }
-    else if (game.physics.arcade.distanceBetween(hero.sprite, enemy.sprite) <= 100) {
-      console.log('distance');
-      enemy.sprite.animations.play('walk',12);
-    }   
     else {
       enemy.sprite.animations.play('idle',12);
+      if (game.physics.arcade.distanceBetween(hero.sprite, enemy.sprite) <= 90) {
+          enemy.sprite.animations.play('walk', 8);
+          enemy.sprite.body.x -= 2; 
+      }   
     }    
   });
   hero.sprite.body.velocity.x = 0;
