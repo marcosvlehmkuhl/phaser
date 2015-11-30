@@ -1,5 +1,6 @@
 var game = new Phaser.Game(1024, 768, Phaser.CANVAS, '', { preload: preload, create: create, update: update, render:render });
 var facing = 'right';
+var lock = 0;
 Phaser.ScaleManager.pageAlignHorizontally = true;
 
 
@@ -46,6 +47,10 @@ events.on('isdead', function(enemy){
   return;
 });
 
+events.on('iswalking', function(enemy){
+  enemy.iswalking = true;
+});
+
 function preload() {
   game.load.image('floor', './assets/images/floor.png');
   game.load.image('background', './assets/images/background.png');
@@ -67,7 +72,7 @@ var Hero = function(game, x, y) {
       animationRateFrame: 10,
       actions: [
         function(target) {
-          target.body.x += 4;
+          target.body.x += 6;
         }
       ]
     },
@@ -76,7 +81,7 @@ var Hero = function(game, x, y) {
       animationRateFrame: 10,
       actions: [
         function(target) {
-          target.body.x -= 4;
+          target.body.x -= 6;
         }
       ]
     },
@@ -103,7 +108,12 @@ var Hero = function(game, x, y) {
           enemies.forEach(function(enemy){
             if (game.physics.arcade.distanceBetween(hero.sprite, enemy.sprite) <= 100) {
               events.emit('punch', enemy); 
-            }            
+            }
+            if (game.physics.arcade.distanceBetween(hero.sprite, enemy.sprite) <= 400) {
+              if(enemy.name == 'boss') {
+                events.emit('punch', enemy); 
+              }
+            }           
           })
         }
       ]
@@ -116,7 +126,12 @@ var Hero = function(game, x, y) {
           enemies.forEach(function(enemy){
             if (game.physics.arcade.distanceBetween(hero.sprite, enemy.sprite) <= 100) {
               events.emit('punch', enemy); 
-            }            
+            }
+            if (game.physics.arcade.distanceBetween(hero.sprite, enemy.sprite) <= 400) {
+              if(enemy.name == 'boss') {
+                events.emit('punch', enemy); 
+              }
+            }               
           })
         }
       ]
@@ -141,6 +156,7 @@ var Hero = function(game, x, y) {
   this.sprite.animations.add('walk',[0,1,2,3,4,5,6,7]);
   this.sprite.animations.add('idle',[8,9,10,11,12,13,14]);
   this.sprite.animations.add('jump',[16,17,18,19,20,21,22,23,24,25,26,27,28,29]);
+  this.sprite.animations.add('down',[16]);
   this.sprite.animations.add('punch',[30,31]);
   this.sprite.animations.add('kick',[32,33]);
   this.sprite.animations.add('damage',[34,9]);
@@ -157,10 +173,12 @@ var Hero = function(game, x, y) {
   }
 }
 
-var Enemy = function(game, x, y) {  
+var Fighter = function(game, x, y) { 
+  enemies.push(this);   
   this.game = game;
   this.health = 20;
   this.alive = true;
+  this.iswalking = false;
   this.sprite = game.add.sprite(x,y,'enemy1');
   game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
   this.sprite.body.bounce.y = 0;
@@ -168,9 +186,9 @@ var Enemy = function(game, x, y) {
   this.sprite.body.collideWorldBounds = true;
   this.sprite.animations.add('walk', [7,6,5,4,3,2,1,0]);
   this.sprite.animations.add('damage',[8,0]);
-  this.sprite.animations.add('dead',[9,10,11,12,13,14,15]);
+  this.sprite.animations.add('dead',[9,10,11,12,13,14,15,15,15,15,15,15,15,15,15,15]);
   this.sprite.animations.add('idle',[16,17,18,19,20,21]);
-  this.deadAnimationTime = 600;
+  this.deadAnimationTime = 800;
   this.actions = function(param, boolean) {
     this.sprite.animations.play(param.animation, param.animationRateFrame, boolean);
     (function(target){
@@ -181,10 +199,12 @@ var Enemy = function(game, x, y) {
   }
 }
 
-var Police = function(game, x, y) {  
+var Police = function(game, x, y) {
+  enemies.push(this);  
   this.game = game;
   this.health = 20;
   this.alive = true;
+  this.iswalking = false;
   this.sprite = game.add.sprite(x,y,'police');
   game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
   this.sprite.body.bounce.y = 0;
@@ -194,7 +214,7 @@ var Police = function(game, x, y) {
   this.sprite.animations.add('damage',[16,0]);
   this.sprite.animations.add('dead',[16,17,33,18,34,35,19,20,19,20,19,20]);
   this.sprite.animations.add('punch',[21,22,23,24]);
-  this.sprite.animations.add('idle',[25,26,27,28,29,30,31,32]);
+  this.sprite.animations.add('idle',[25,26,27,28,29,29,29,29,29,29,29,29,29,29,31,31,31,32,32,32]);
   this.deadAnimationTime = 1000;
   this.actions = function(param, boolean) {
     this.sprite.animations.play(param.animation, param.animationRateFrame, boolean);
@@ -206,20 +226,23 @@ var Police = function(game, x, y) {
   }
 }
 
-var Boss = function(game, x, y) {  
+var Boss = function(game, x, y) { 
+  enemies.push(this);   
   this.game = game;
-  this.health = 20;
+  this.name = 'boss';
+  this.health = 50;
   this.alive = true;
+  this.iswalking = false;
   this.sprite = game.add.sprite(x,y,'boss');
   game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
   this.sprite.body.bounce.y = 0;
   this.sprite.body.gravity.y = 500;
   this.sprite.body.collideWorldBounds = true;
-  this.sprite.animations.add('dead',[0,1,2,3,4,5,6,7,8,9,10,11]);
-  this.sprite.animations.add('walk', [18,19,20,21]);
-  this.sprite.animations.add('damage',[22]);
+  this.sprite.animations.add('dead',[0,1,2,3,4,5,5,5,6,6,6,6,7,7,7,8,8,8,9,9,9,10,10,10,11,11,11,11,11,11,11,11,11,11,11,11,11]);
+  this.sprite.animations.add('walk', [18,18,18,18,19,19,19,19,20,20,20,20,21,21,21,21]);
+  this.sprite.animations.add('damage',[22,22,22,22]);
   this.sprite.animations.add('idle',[12,13,14,15,16]);
-  this.deadAnimationTime = 400;
+  this.deadAnimationTime = 2000;
   this.actions = function(param, boolean) {
     this.sprite.animations.play(param.animation, param.animationRateFrame, boolean);
     (function(target){
@@ -242,11 +265,16 @@ function create() {
 
   enemies = [];
 
-  enemy2 = new Police(game, 200, 800);
-  // enemy3 = new Boss(game, 300, 700);
+  enemy1 = new Police(game, 1750, 800);
+  enemy2 = new Police(game, 2000, 800);
+  enemy3 = new Police(game, 2590, 800);
+  enemy4 = new Police(game, 3000, 800);
+  enemy5 = new Police(game, 2800, 800);
+  enemy6 = new Fighter(game, 3200, 800);
+  enemy7 = new Fighter(game, 3700, 800);
+  enemy8 = new Fighter(game, 4200, 800);
+  boss = new Boss(game, 5100, 800);
 
-  enemies.push(enemy2);  
-  // enemies.push(enemy3);
 
 
   hero = new Hero(game, 0, 400);
@@ -279,20 +307,37 @@ function update() {
       enemy.sprite.animations.play('dead', 12, true);
       setTimeout(function(){
         enemy.sprite.kill();
-        enemies.slice(enemies.indexOf(enemy),1);
+        var index = enemies.indexOf(enemy);
+        if(index > -1) {
+          enemies.splice(index, 1);
+        }
         enemy = null;
       },enemy.deadAnimationTime);
     }
+    else if (game.physics.arcade.distanceBetween(hero.sprite, enemy.sprite) <= 250 && game.physics.arcade.distanceBetween(hero.sprite, enemy.sprite) >= 100) {
+        if (enemy.iswalking) {
+          enemy.sprite.animations.play('walk',12);
+          enemy.sprite.body.x -= 4;
+        }   
+        else {
+          events.emit('iswalking', enemy);
+        }
+    } 
     else {
+      enemy.iswalking = false;
       enemy.sprite.animations.play('idle',12);
-      if (game.physics.arcade.distanceBetween(hero.sprite, enemy.sprite) <= 90) {
-          enemy.sprite.animations.play('walk', 8);
-          enemy.sprite.body.x -= 2; 
-      }   
     }    
   });
   hero.sprite.body.velocity.x = 0;
-
+  if(hero.sprite.position.x >= 2600) {
+      game.camera.unfollow();
+      lock = 1;    
+  }
+  if(enemies.length <= 4 && lock == 1) {
+      game.camera.bounds.width = ground.body.width;
+      game.world.setBounds(2600, 0, ground.body.width - 2600, 695); //695
+      game.camera.follow(hero.sprite);
+    }
   if (game.input.keyboard.isDown(Phaser.Keyboard.RIGHT))
   {
     mountains.x -= 0.2;
@@ -326,6 +371,10 @@ function update() {
   else if (game.input.keyboard.isDown(Phaser.Keyboard.UP) && hero.sprite.body.onFloor())
   {
     hero.actions(hero.params.jump, false);      
+  }
+  else if (game.input.keyboard.isDown(Phaser.Keyboard.DOWN) && hero.sprite.body.onFloor())
+  {
+    hero.sprite.animations.play('down',12);     
   }
   else if (game.input.keyboard.isDown(Phaser.Keyboard.Z))
   {
