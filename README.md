@@ -1,2 +1,2 @@
-This was a project for my university
-Access http://marcosvlehmkuhl.github.io/phaser/ to see it
+# This was a project for my university.
+[Click Here] (http://marcosvlehmkuhl.github.io/phaser/) to see it
